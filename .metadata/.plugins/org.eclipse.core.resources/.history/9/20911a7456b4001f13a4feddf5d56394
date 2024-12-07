@@ -1,0 +1,55 @@
+package com.klef.jfsd.exam;
+
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+import org.hibernate.query.Query;
+import org.hibernate.SessionFactory;
+import org.hibernate.cfg.Configuration;
+
+import java.util.Scanner;
+
+public class ClientDemo {
+    public static void main(String[] args) {
+        // Step 1: Configure Hibernate
+        Configuration configuration = new Configuration();
+        configuration.configure("hibernate.cfg.xml");
+        configuration.addAnnotatedClass(Department.class);
+
+        SessionFactory sessionFactory = configuration.buildSessionFactory();
+        Session session = sessionFactory.openSession();
+        Transaction transaction = session.beginTransaction();
+
+        try (Scanner scanner = new Scanner(System.in)) {
+            // Collect user input
+            System.out.println("Enter Department ID to update: ");
+            int deptId = scanner.nextInt();
+            scanner.nextLine(); // Consume newline
+
+            System.out.println("Enter new Department Name: ");
+            String newName = scanner.nextLine();
+
+            System.out.println("Enter new Location: ");
+            String newLocation = scanner.nextLine();
+
+            // HQL Update using Positional Parameters
+            String hqlUpdate = "UPDATE Department SET name = ?1, location = ?2 WHERE deptId = ?3";
+            Query query = session.createQuery(hqlUpdate);
+            query.setParameter(1, newName);
+            query.setParameter(2, newLocation);
+            query.setParameter(3, deptId);
+
+            int result = query.executeUpdate();
+            System.out.println(result + " record(s) updated.");
+
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            e.printStackTrace();
+        } finally {
+            session.close();
+            sessionFactory.close();
+        }
+    }
+}
